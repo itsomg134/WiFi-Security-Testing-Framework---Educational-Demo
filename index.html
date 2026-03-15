@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Security Testing Interface - Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0f0f 0%, #1a2f2f 100%);
+            color: #00ff9d;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .terminal-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #0a1a1a;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 157, 0.2);
+            border: 2px solid #00ff9d;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            background: #00ff9d;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .terminal-header h3 {
+            color: #0a1a1a;
+            font-size: 16px;
+            font-weight: bold;
+            flex-grow: 1;
+        }
+
+        .terminal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .close { background: #ff5f56; }
+        .minimize { background: #ffbd2e; }
+        .maximize { background: #27c93f; }
+
+        .terminal-body {
+            padding: 20px;
+            min-height: 600px;
+            background: #0a1a1a;
+            position: relative;
+        }
+
+        .prompt {
+            color: #00ff9d;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prompt-symbol {
+            font-weight: bold;
+            color: #00ff9d;
+        }
+
+        .prompt-text {
+            background: transparent;
+            border: none;
+            color: #00ff9d;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            flex-grow: 1;
+            outline: none;
+        }
+
+        .command-output {
+            margin: 15px 0;
+            padding: 15px;
+            background: #0f1f1f;
+            border-left: 3px solid #00ff9d;
+            border-radius: 0 5px 5px 0;
+        }
+
+        .network-list {
+            list-style: none;
+            margin: 10px 0;
+        }
+
+        .network-item {
+            padding: 12px;
+            margin: 5px 0;
+            background: #0f1f1f;
+            border: 1px solid #00ff9d33;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .network-item:hover {
+            background: #1a2f2f;
+            border-color: #00ff9d;
+            transform: translateX(5px);
+        }
+
+        .network-item.selected {
+            background: #1a2f2f;
+            border: 2px solid #00ff9d;
+        }
+
+        .network-name {
+            color: #00ff9d;
+            font-weight: bold;
+        }
+
+        .network-details {
+            color: #00ff9d99;
+            font-size: 12px;
+        }
+
+        .stats-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: #0f1f1f;
+            border: 1px solid #00ff9d33;
+            border-radius: 5px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #00ff9d99;
+            font-size: 12px;
+        }
+
+        .stat-value {
+            color: #00ff9d;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .attack-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .attack-card {
+            background: #0f1f1f;
+            border: 1px solid #00ff9d33;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .attack-card h4 {
+            color: #00ff9d;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #1a2f2f;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff9d, #00cc7a);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .button {
+            background: transparent;
+            border: 2px solid #00ff9d;
+            color: #00ff9d;
+            padding: 8px 20px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .button:hover {
+            background: #00ff9d;
+            color: #0a1a1a;
+            box-shadow: 0 0 15px #00ff9d;
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #666;
+        }
+
+        .button.small {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+
+        .scan-animation {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #00ff9d33;
+            border-top-color: #00ff9d;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .password-display {
+            background: #0f1f1f;
+            border: 2px dashed #00ff9d;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            border-radius: 10px;
+            color: #00ff9d;
+            word-break: break-all;
+        }
+
+        .log-container {
+            background: #0f1f1f;
+            border: 1px solid #00ff9d33;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 20px 0;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            color: #00ff9d99;
+            font-size: 12px;
+            padding: 2px 0;
+            border-bottom: 1px solid #00ff9d1a;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .footer {
+            margin-top: 20px;
+            padding: 10px;
+            text-align: center;
+            color: #00ff9d99;
+            font-size: 12px;
+            border-top: 1px solid #00ff9d33;
+        }
+
+        .warning-box {
+            background: rgba(255, 100, 100, 0.1);
+            border: 1px solid #ff6464;
+            color: #ff6464;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .wordlist-selector {
+            margin: 10px 0;
+            padding: 10px;
+            background: #0f1f1f;
+            border-radius: 5px;
+        }
+
+        select {
+            background: #0a1a1a;
+            color: #00ff9d;
+            border: 1px solid #00ff9d;
+            padding: 5px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="terminal-buttons">
+                <span class="terminal-btn close"></span>
+                <span class="terminal-btn minimize"></span>
+                <span class="terminal-btn maximize"></span>
+            </div>
+            <h3>WiFi Security Testing Framework v2.0 - Educational Demo</h3>
+        </div>
+        
+        <div class="terminal-body">
+            <!-- Legal Warning -->
+            <div class="warning-box">
+                ⚠️ LEGAL WARNING: This is a demonstration interface for educational purposes only. 
+                Unauthorized access to WiFi networks is illegal and punishable by law.
+            </div>
+
+            <!-- Statistics Panel -->
+            <div class="stats-panel">
+                <div class="stat-box">
+                    <div class="stat-label">Networks Found</div>
+                    <div class="stat-value" id="networkCount">3</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Capture Progress</div>
+                    <div class="stat-value" id="capturePercent">0%</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Packets Captured</div>
+                    <div class="stat-value" id="packetCount">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Attack Status</div>
+                    <div class="stat-value" id="attackStatus">Idle</div>
+                </div>
+            </div>
+
+            <!-- Command Line Simulation -->
+            <div class="prompt">
+                <span class="prompt-symbol">┌──(kali㉿kali)-[~]</span>
+            </div>
+            <div class="prompt">
+                <span class="prompt-symbol">└─$</span>
+                <input type="text" class="prompt-text" id="commandLine" value="sudo airodump-ng wlan0" readonly>
+            </div>
+
+            <!-- Network List -->
+            <div class="command-output">
+                <p>Available Networks (Click to select):</p>
+                <ul class="network-list" id="networkList">
+                    <li class="network-item" onclick="selectNetwork('JioFi_5G_1234', '90', '6', 'WPA2')">
+                        <span class="network-name">📡 JioFi_5G_1234</span>
+                        <span class="network-details">CH: 6 | Signal: 90% | WPA2</span>
+                    </li>
+                    <li class="network-item" onclick="selectNetwork('Airtel_Fiber_5678', '75', '11', 'WPA3')">
+                        <span class="network-name">📡 Airtel_Fiber_5678</span>
+                        <span class="network-details">CH: 11 | Signal: 75% | WPA3</span>
+                    </li>
+                    <li class="network-item" onclick="selectNetwork('Home_WiFi_Test', '100', '1', 'WPA2')">
+                        <span class="network-name">📡 Home_WiFi_Test</span>
+                        <span class="network-details">CH: 1 | Signal: 100% | WPA2</span>
+                    </li>
+                    <li class="network-item" onclick="selectNetwork('Cafe_Guest_Net', '45', '3', 'WPA')">
+                        <span class="network-name">📡 Cafe_Guest_Net</span>
+                        <span class="network-details">CH: 3 | Signal: 45% | WPA</span>
+                    </li>
+                    <li class="network-item" onclick="selectNetwork('Office_Network_Secure', '80', '8', 'WPA2-Enterprise')">
+                        <span class="network-name">📡 Office_Network_Secure</span>
+                        <span class="network-details">CH: 8 | Signal: 80% | Enterprise</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Selected Network Info -->
+            <div class="command-output" style="padding: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong>Selected Network:</strong> <span id="selectedNetwork">None</span><br>
+                        <strong>BSSID:</strong> <span id="selectedBSSID">-</span> | 
+                        <strong>Channel:</strong> <span id="selectedChannel">-</span>
+                    </div>
+                    <div>
+                        <button class="button small" onclick="startMonitorMode()">Start Monitor Mode</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wordlist Selection -->
+            <div class="wordlist-selector">
+                <label>Select Wordlist:</label>
+                <select id="wordlist">
+                    <option value="rockyou.txt">rockyou.txt (14M passwords)</option>
+                    <option value="common.txt">common.txt (1M passwords)</option>
+                    <option value="custom.txt">custom.txt (100K passwords)</option>
+                </select>
+            </div>
+
+            <!-- Attack Panel -->
+            <div class="attack-panel">
+                <div class="attack-card">
+                    <h4>🔍 Handshake Capture</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="handshakeProgress" style="width: 0%"></div>
+                    </div>
+                    <button class="button" onclick="startHandshakeCapture()" id="captureBtn">Start Capture</button>
+                </div>
+
+                <div class="attack-card">
+                    <h4>⚡ De-authentication Attack</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="deauthProgress" style="width: 0%"></div>
+                    </div>
+                    <button class="button" onclick="startDeauth()" id="deauthBtn" disabled>Start Attack</button>
+                </div>
+
+                <div class="attack-card">
+                    <h4>🔑 Password Cracking</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="crackProgress" style="width: 0%"></div>
+                    </div>
+                    <button class="button" onclick="startCracking()" id="crackBtn" disabled>Start Cracking</button>
+                </div>
+            </div>
+
+            <!-- Password Display -->
+            <div class="password-display" id="passwordDisplay">
+                ⚡ Password will appear here after successful crack ⚡
+            </div>
+
+            <!-- Activity Log -->
+            <div class="log-container" id="logOutput">
+                <div class="log-entry">[2024-01-15 10:30:22] System initialized. Ready for scanning...</div>
+                <div class="log-entry">[2024-01-15 10:30:23] Use 'Scan Networks' to discover available WiFi</div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button class="button" onclick="scanNetworks()">
+                    <span id="scanIcon">📡</span> Scan Networks
+                </button>
+                <button class="button" onclick="showNetworkDetails()">
+                    ℹ️ Network Details
+                </button>
+                <button class="button" onclick="resetAll()">
+                    🔄 Reset All
+                </button>
+                <button class="button" onclick="showLegalInfo()">
+                    ⚖️ Legal Information
+                </button>
+                <button class="button" onclick="exportCapture()">
+                    💾 Export Capture
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        ⚠️ EDUCATIONAL DEMO ONLY - This interface simulates WiFi security testing tools. 
+        Always obtain proper authorization before testing network security.
+    </div>
+
+    <script>
+        let selectedNetworkName = "None";
+        let isCapturing = false;
+        let isCracking = false;
+        let packetCount = 0;
+        let captureInterval;
+        let crackInterval;
+
+        function selectNetwork(name, signal, channel, encryption) {
+            selectedNetworkName = name;
+            document.getElementById('selectedNetwork').textContent = name;
+            document.getElementById('selectedBSSID').textContent = generateBSSID();
+            document.getElementById('selectedChannel').textContent = channel;
+            
+            // Highlight selected network
+            document.querySelectorAll('.network-item').forEach(item => {
+                item.classList.remove('selected');
+                if(item.textContent.includes(name)) {
+                    item.classList.add('selected');
+                }
+            });
+
+            addLogEntry(`Selected target: ${name} (CH: ${channel}, ${encryption})`);
+            
+            // Enable deauth button if network selected
+            if(name !== "None") {
+                document.getElementById('deauthBtn').disabled = false;
+            }
+        }
+
+        function generateBSSID() {
+            return 'XX:XX:XX:XX:XX:XX'.replace(/X/g, function() {
+                return '0123456789ABCDEF'[Math.floor(Math.random()*16)];
+            });
+        }
+
+        function startMonitorMode() {
+            addLogEntry('Starting monitor mode on wlan0...');
+            setTimeout(() => {
+                addLogEntry('Monitor mode enabled on wlan0mon');
+                document.getElementById('commandLine').value = 'sudo airmon-ng start wlan0 [OK]';
+            }, 1000);
+        }
+
+        function startHandshakeCapture() {
+            if(selectedNetworkName === "None") {
+                alert('Please select a network first!');
+                return;
+            }
+
+            if(isCapturing) {
+                stopCapture();
+                return;
+            }
+
+            isCapturing = true;
+            document.getElementById('captureBtn').textContent = 'Stop Capture';
+            packetCount = 0;
+            
+            addLogEntry(`Starting handshake capture on ${selectedNetworkName}...`);
+            
+            captureInterval = setInterval(() => {
+                packetCount += Math.floor(Math.random() * 50) + 10;
+                let progress = Math.min((packetCount / 500) * 100, 100);
+                document.getElementById('handshakeProgress').style.width = progress + '%';
+                document.getElementById('packetCount').textContent = packetCount;
+                document.getElementById('capturePercent').textContent = Math.round(progress) + '%';
+                
+                if(packetCount >= 500) {
+                    stopCapture();
+                    addLogEntry('✓ Handshake captured successfully!');
+                    document.getElementById('crackBtn').disabled = false;
+                    document.getElementById('attackStatus').textContent = 'Handshake Ready';
+                }
+            }, 200);
+        }
+
+        function stopCapture() {
+            clearInterval(captureInterval);
+            isCapturing = false;
+            document.getElementById('captureBtn').textContent = 'Start Capture';
+            addLogEntry('Capture stopped');
+        }
+
+        function startDeauth() {
+            if(selectedNetworkName === "None") {
+                alert('Please select a network first!');
+                return;
+            }
+
+            addLogEntry('Starting de-authentication attack...');
+            document.getElementById('deauthBtn').disabled = true;
+            document.getElementById('attackStatus').textContent = 'Deauth in Progress';
+            
+            let progress = 0;
+            let deauthInterval = setInterval(() => {
+                progress += 10;
+                document.getElementById('deauthProgress').style.width = progress + '%';
+                
+                if(progress >= 100) {
+                    clearInterval(deauthInterval);
+                    addLogEntry('✓ De-authentication complete. Client disconnected.');
+                    document.getElementById('deauthBtn').disabled = false;
+                    document.getElementById('attackStatus').textContent = 'Deauth Complete';
+                    
+                    // Auto-start capture after deauth
+                    if(!isCapturing) {
+                        setTimeout(() => startHandshakeCapture(), 500);
+                    }
+                }
+            }, 300);
+        }
+
+        function startCracking() {
+            if(isCracking) return;
+            
+            isCracking = true;
+            document.getElementById('crackBtn').disabled = true;
+            document.getElementById('attackStatus').textContent = 'Cracking Password...';
+            
+            let wordlist = document.getElementById('wordlist').value;
+            addLogEntry(`Starting password cracking with ${wordlist}...`);
+            
+            let progress = 0;
+            let attempts = 0;
+            
+            crackInterval = setInterval(() => {
+                progress += Math.random() * 5;
+                attempts += Math.floor(Math.random() * 1000) + 500;
+                
+                if(progress >= 100) {
+                    progress = 100;
+                    clearInterval(crackInterval);
+                    
+                    // Demo passwords based on network name
+                    let password = generateDemoPassword(selectedNetworkName);
+                    document.getElementById('passwordDisplay').textContent = '🔑 PASSWORD FOUND: ' + password + ' 🔑';
+                    document.getElementById('crackProgress').style.width = '100%';
+                    document.getElementById('attackStatus').textContent = 'Password Cracked!';
+                    
+                    addLogEntry(`✓ Password cracked after ${attempts.toLocaleString()} attempts!`);
+                    addLogEntry(`Password: ${password}`);
+                    
+                    isCracking = false;
+                } else {
+                    document.getElementById('crackProgress').style.width = progress + '%';
+                }
+                
+                if(attempts % 5000 === 0) {
+                    addLogEntry(`Tried ${attempts.toLocaleString()} passwords...`);
+                }
+            }, 100);
+        }
+
+        function generateDemoPassword(networkName) {
+            const passwords = {
+                'JioFi_5G_1234': 'jiofi1234@5g',
+                'Airtel_Fiber_5678': 'airtel@fiber2024',
+                'Home_WiFi_Test': 'homewifi@123',
+                'Cafe_Guest_Net': 'cafeguest@2024',
+                'Office_Network_Secure': 'Office@Secure#2024'
+            };
+            return passwords[networkName] || 'password123';
+        }
+
+        function scanNetworks() {
+            let scanIcon = document.getElementById('scanIcon');
+            scanIcon.innerHTML = '⏳';
+            
+            addLogEntry('Scanning for networks...');
+            
+            setTimeout(() => {
+                scanIcon.innerHTML = '📡';
+                addLogEntry('Found 5 networks');
+                document.getElementById('networkCount').textContent = '5';
+                
+                // Simulate finding new networks
+                let networks = document.getElementById('networkList');
+                networks.innerHTML = networks.innerHTML; // Refresh list
+            }, 2000);
+        }
+
+        function addLogEntry(message) {
+            let logContainer = document.getElementById('logOutput');
+            let timestamp = new Date().toLocaleTimeString();
+            let newLog = document.createElement('div');
+            newLog.className = 'log-entry';
+            newLog.textContent = `[${timestamp}] ${message}`;
+            logContainer.insertBefore(newLog, logContainer.firstChild);
+            
+            // Keep only last 10 logs
+            while(logContainer.children.length > 10) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        function resetAll() {
+            // Clear all intervals
+            clearInterval(captureInterval);
+            clearInterval(crackInterval);
+            
+            // Reset progress bars
+            document.getElementById('handshakeProgress').style.width = '0%';
+            document.getElementById('deauthProgress').style.width = '0%';
+            document.getElementById('crackProgress').style.width = '0%';
+            
+            // Reset displays
+            document.getElementById('passwordDisplay').textContent = '⚡ Password will appear here after successful crack ⚡';
+            document.getElementById('selectedNetwork').textContent = 'None';
+            document.getElementById('packetCount').textContent = '0';
+            document.getElementById('capturePercent').textContent = '0%';
+            document.getElementById('attackStatus').textContent = 'Idle';
+            
+            // Reset buttons
+            document.getElementById('captureBtn').disabled = false;
+            document.getElementById('deauthBtn').disabled = true;
+            document.getElementById('crackBtn').disabled = true;
+            document.getElementById('captureBtn').textContent = 'Start Capture';
+            
+            // Reset state
+            isCapturing = false;
+            isCracking = false;
+            packetCount = 0;
+            selectedNetworkName = "None";
+            
+            // Remove selected class from networks
+            document.querySelectorAll('.network-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            addLogEntry('System reset completed');
+        }
+
+        function showNetworkDetails() {
+            if(selectedNetworkName === "None") {
+                alert('Please select a network first!');
+                return;
+            }
+            
+            let details = `
+                Network: ${selectedNetworkName}
+                BSSID: ${document.getElementById('selectedBSSID').textContent}
+                Channel: ${document.getElementById('selectedChannel').textContent}
+                Encryption: WPA2
+                Signal: 85%
+                Clients Connected: ${Math.floor(Math.random() * 10) + 1}
+            `;
+            alert(details);
+        }
+
+        function showLegalInfo() {
+            alert(
+                'LEGAL INFORMATION\n\n' +
+                '1. This is a DEMO interface for educational purposes only\n' +
+                '2. Unauthorized access to WiFi networks is illegal\n' +
+                '3. Only test networks you own or have written permission to test\n' +
+                '4. Violating network security can result in:\n' +
+                '   - Heavy fines\n' +
+                '   - Imprisonment\n' +
+                '   - Criminal record\n\n' +
+                'Always obtain proper authorization before security testing!'
+            );
+        }
+
+        function exportCapture() {
+            if(packetCount === 0) {
+                alert('No capture data to export!');
+                return;
+            }
+            
+            addLogEntry('Exporting capture file: handshake-01.cap');
+            alert('Capture file exported successfully! (Demo mode)');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if(e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                resetAll();
+            }
+        });
+    </script>
+</body>
+</html>
